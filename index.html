@@ -1,191 +1,157 @@
-"use client";
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tra cứu điểm thi THPT</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen flex flex-col items-center bg-gray-50 py-10 px-4">
+    <!-- Title -->
+    <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-8 text-center">
+      Tra cứu điểm thi THPT
+    </h1>
 
-import React, { useState } from "react";
-import { motion } from "framer-motion";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Search } from "lucide-react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+    <!-- Guide -->
+    <section
+      class="w-full max-w-xl mb-8 bg-white shadow-sm rounded-lg p-6 border border-gray-200"
+    >
+      <h2 class="text-lg font-semibold text-gray-700 mb-3">Hướng dẫn tra cứu</h2>
+      <ul class="list-disc list-inside space-y-1 text-sm text-gray-600">
+        <li>Nhập <strong>Số báo danh</strong> và <strong>Ngày sinh</strong> chính xác.</li>
+        <li>Bấm nút <em>Tra cứu</em> để xem kết quả.</li>
+        <li>Đây chỉ là bản demo, dữ liệu điểm thực có thể khác.</li>
+      </ul>
+    </section>
 
-interface ExamResult {
-  name: string;
-  math: number;
-  literature: number;
-  english: number;
-  physics: number;
-}
-
-export default function ExamLookupApp() {
-  const [candidateId, setCandidateId] = useState<string>("");
-  const [dob, setDob] = useState<string>("");
-  const [result, setResult] = useState<ExamResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  /**
-   * Demo: trả về điểm cố định.
-   */
-  const handleSearch = () => {
-    if (!candidateId || !dob) {
-      setError("Vui lòng nhập đầy đủ thông tin.");
-      return;
-    }
-
-    setError(null);
-
-    const fixed = {
-      literature: 8,
-      math: 9.5,
-      physics: 10,
-      english: 9,
-    };
-
-    const data: ExamResult = {
-      name: `Thí sinh ${candidateId}`,
-      ...fixed,
-    };
-
-    setResult(data);
-  };
-
-  const renderScoreRow = (label: string, value: number | undefined) => (
-    <>
-      <span className="font-medium text-gray-600">{label}</span>
-      <span>{value ?? "-"}</span>
-    </>
-  );
-
-  return (
-    <div className="min-h-screen flex flex-col items-center bg-gray-50 py-10 px-4">
-      <motion.h1
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="text-3xl md:text-4xl font-bold text-gray-800 mb-8 text-center"
-      >
-        Tra cứu điểm thi THPT
-      </motion.h1>
-
-      {/* Hướng dẫn */}
-      <Card className="w-full max-w-xl mb-8 shadow-sm">
-        <CardHeader>
-          <h2 className="text-lg font-semibold text-gray-700">Hướng dẫn tra cứu</h2>
-        </CardHeader>
-        <CardContent>
-          <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
-            <li>Nhập <strong>Số báo danh</strong> và <strong>Ngày sinh</strong> chính xác.</li>
-            <li>Bấm nút <em>Tra cứu</em> để xem kết quả.</li>
-            <li>Đây chỉ là bản demo, dữ liệu điểm thực có thể khác.</li>
-          </ul>
-        </CardContent>
-      </Card>
-
-      {/* Form tra cứu */}
-      <Card className="w-full max-w-xl bg-white shadow-md rounded-lg">
-        <CardContent className="flex flex-col gap-6 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <Label htmlFor="cid" className="text-gray-700">Số báo danh</Label>
-              <Input
-                id="cid"
-                placeholder="VD: 1234567"
-                value={candidateId}
-                onChange={e => setCandidateId(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="dob" className="text-gray-700">Ngày sinh</Label>
-              <Input
-                id="dob"
-                type="date"
-                value={dob}
-                onChange={e => setDob(e.target.value)}
-              />
-            </div>
+    <!-- Form -->
+    <section class="w-full max-w-xl bg-white shadow-md rounded-lg p-8">
+      <form id="lookupForm" class="flex flex-col gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="cid" class="text-gray-700 block mb-1">Số báo danh</label>
+            <input
+              id="cid"
+              type="text"
+              placeholder="VD: 1234567"
+              class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              required
+            />
           </div>
+          <div>
+            <label for="dob" class="text-gray-700 block mb-1">Ngày sinh</label>
+            <input
+              id="dob"
+              type="date"
+              class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              required
+            />
+          </div>
+        </div>
 
-          <Button
-            onClick={handleSearch}
-            className="self-center flex items-center gap-2 px-8 py-3 text-base rounded-md"
-          >
-            <Search size={18} />
-            Tra cứu
-          </Button>
-
-          {error && <p className="text-red-500 text-center text-sm mt-2">{error}</p>}
-        </CardContent>
-      </Card>
-
-      {/* Kết quả */}
-      {result && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mt-8 w-full max-w-xl"
+        <button
+          type="submit"
+          class="self-center flex items-center gap-2 px-8 py-3 text-base rounded-md bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
-          <Card className="bg-white rounded-lg shadow-md">
-            <CardHeader>
-              <h2 className="text-xl font-semibold text-gray-800 text-center">
-                Kết quả của {result.name}
-              </h2>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm text-gray-700">
-                {renderScoreRow("Toán", result.math)}
-                {renderScoreRow("Ngữ văn", result.literature)}
-                {renderScoreRow("Tiếng Anh", result.english)}
-                {renderScoreRow("Vật lý", result.physics)}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
+          Tra cứu
+        </button>
+      </form>
+      <p id="errorMsg" class="text-red-500 text-center text-sm mt-4 hidden"></p>
+    </section>
 
-      {/* FAQ reverted */}
-      <Card className="w-full max-w-xl mt-12 shadow-sm">
-        <CardHeader>
-          <h2 className="text-lg font-semibold text-gray-700">Câu hỏi thường gặp</h2>
-        </CardHeader>
-        <CardContent>
-          <Accordion type="single" collapsible className="space-y-4">
-            <AccordionItem value="q1">
-              <AccordionTrigger>Không tra cứu được điểm?</AccordionTrigger>
-              <AccordionContent>
-                Kiểm tra lại số báo danh và ngày sinh. Nếu vẫn không được, có thể dữ liệu
-                chưa được cập nhật hoặc hệ thống đang bận. Vui lòng thử lại sau.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="q2">
-              <AccordionTrigger>Tra cứu nhiều lần có bị giới hạn không?</AccordionTrigger>
-              <AccordionContent>
-                Hệ thống không giới hạn số lần tra cứu, nhưng vui lòng không làm mới liên tục
-                để đảm bảo ổn định.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="q3">
-              <AccordionTrigger>Điểm hiển thị có chính xác tuyệt đối?</AccordionTrigger>
-              <AccordionContent>
-                Dữ liệu lấy trực tiếp từ Bộ GD&ĐT. Mọi sai lệch (nếu có) vui lòng liên hệ hội đồng thi.
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </CardContent>
-      </Card>
+    <!-- Result (hidden by default) -->
+    <section
+      id="resultCard"
+      class="hidden mt-8 w-full max-w-xl bg-white rounded-lg shadow-md p-8"
+    >
+      <h2 id="resultTitle" class="text-xl font-semibold text-gray-800 text-center mb-6"></h2>
+      <div class="grid grid-cols-2 gap-y-3 gap-x-4 text-sm text-gray-700" id="resultGrid">
+        <!-- Filled by JS -->
+      </div>
+    </section>
 
-      <footer className="text-gray-500 mt-16 text-xs text-center">
-        © {new Date().getFullYear()} • Thiết kế bởi bạn
-      </footer>
-    </div>
-  );
-}
+    <!-- FAQ -->
+    <section
+      class="w-full max-w-xl mt-12 bg-white shadow-sm rounded-lg p-6 border border-gray-200"
+    >
+      <h2 class="text-lg font-semibold text-gray-700 mb-4">Câu hỏi thường gặp</h2>
+      <details class="mb-3">
+        <summary class="cursor-pointer font-medium text-gray-700">Không tra cứu được điểm?</summary>
+        <p class="mt-2 text-sm text-gray-600">
+          Kiểm tra lại số báo danh và ngày sinh. Nếu vẫn không được, có thể dữ liệu chưa
+          được cập nhật hoặc hệ thống đang bận. Vui lòng thử lại sau.
+        </p>
+      </details>
+      <details class="mb-3">
+        <summary class="cursor-pointer font-medium text-gray-700">Tra cứu nhiều lần có bị giới hạn không?</summary>
+        <p class="mt-2 text-sm text-gray-600">
+          Hệ thống không giới hạn số lần tra cứu, nhưng vui lòng không làm mới liên tục để đảm bảo ổn định.
+        </p>
+      </details>
+      <details>
+        <summary class="cursor-pointer font-medium text-gray-700">Điểm hiển thị có chính xác tuyệt đối?</summary>
+        <p class="mt-2 text-sm text-gray-600">
+          Dữ liệu lấy trực tiếp từ Bộ GD&ĐT. Mọi sai lệch (nếu có) vui lòng liên hệ hội đồng thi.
+        </p>
+      </details>
+    </section>
+
+    <footer class="text-gray-500 mt-16 text-xs text-center">
+      © <span id="year"></span> • Thiết kế bởi Nguyễn Huy Dũng
+    </footer>
+
+    <script>
+      // Hiển thị năm hiện tại
+      document.getElementById("year").textContent = new Date().getFullYear();
+
+      const form = document.getElementById("lookupForm");
+      const resultCard = document.getElementById("resultCard");
+      const resultTitle = document.getElementById("resultTitle");
+      const resultGrid = document.getElementById("resultGrid");
+      const errorMsg = document.getElementById("errorMsg");
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const cid = document.getElementById("cid").value.trim();
+        const dob = document.getElementById("dob").value;
+
+        if (!cid || !dob) {
+          errorMsg.textContent = "Vui lòng nhập đầy đủ thông tin.";
+          errorMsg.classList.remove("hidden");
+          resultCard.classList.add("hidden");
+          return;
+        }
+
+        errorMsg.classList.add("hidden");
+
+        // Điểm cố định demo
+        const fixedScores = {
+          "Toán": 9.5,
+          "Ngữ văn": 8,
+          "Tiếng Anh": 9,
+          "Vật lý": 10,
+        };
+
+        // Render kết quả
+        resultTitle.textContent = `Kết quả của Thí sinh ${cid}`;
+        resultGrid.innerHTML = "";
+
+        for (const [subject, score] of Object.entries(fixedScores)) {
+          const label = document.createElement("span");
+          label.textContent = subject;
+          label.className = "font-medium text-gray-600";
+
+          const value = document.createElement("span");
+          value.textContent = score;
+
+          resultGrid.appendChild(label);
+          resultGrid.appendChild(value);
+        }
+
+        resultCard.classList.remove("hidden");
+      });
+    </script>
+  </body>
+</html>
