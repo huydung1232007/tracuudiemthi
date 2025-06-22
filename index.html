@@ -1,0 +1,191 @@
+"use client";
+
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Search } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
+interface ExamResult {
+  name: string;
+  math: number;
+  literature: number;
+  english: number;
+  physics: number;
+}
+
+export default function ExamLookupApp() {
+  const [candidateId, setCandidateId] = useState<string>("");
+  const [dob, setDob] = useState<string>("");
+  const [result, setResult] = useState<ExamResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Demo: trả về điểm cố định.
+   */
+  const handleSearch = () => {
+    if (!candidateId || !dob) {
+      setError("Vui lòng nhập đầy đủ thông tin.");
+      return;
+    }
+
+    setError(null);
+
+    const fixed = {
+      literature: 8,
+      math: 9.5,
+      physics: 10,
+      english: 9,
+    };
+
+    const data: ExamResult = {
+      name: `Thí sinh ${candidateId}`,
+      ...fixed,
+    };
+
+    setResult(data);
+  };
+
+  const renderScoreRow = (label: string, value: number | undefined) => (
+    <>
+      <span className="font-medium text-gray-600">{label}</span>
+      <span>{value ?? "-"}</span>
+    </>
+  );
+
+  return (
+    <div className="min-h-screen flex flex-col items-center bg-gray-50 py-10 px-4">
+      <motion.h1
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="text-3xl md:text-4xl font-bold text-gray-800 mb-8 text-center"
+      >
+        Tra cứu điểm thi THPT
+      </motion.h1>
+
+      {/* Hướng dẫn */}
+      <Card className="w-full max-w-xl mb-8 shadow-sm">
+        <CardHeader>
+          <h2 className="text-lg font-semibold text-gray-700">Hướng dẫn tra cứu</h2>
+        </CardHeader>
+        <CardContent>
+          <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
+            <li>Nhập <strong>Số báo danh</strong> và <strong>Ngày sinh</strong> chính xác.</li>
+            <li>Bấm nút <em>Tra cứu</em> để xem kết quả.</li>
+            <li>Đây chỉ là bản demo, dữ liệu điểm thực có thể khác.</li>
+          </ul>
+        </CardContent>
+      </Card>
+
+      {/* Form tra cứu */}
+      <Card className="w-full max-w-xl bg-white shadow-md rounded-lg">
+        <CardContent className="flex flex-col gap-6 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <Label htmlFor="cid" className="text-gray-700">Số báo danh</Label>
+              <Input
+                id="cid"
+                placeholder="VD: 1234567"
+                value={candidateId}
+                onChange={e => setCandidateId(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="dob" className="text-gray-700">Ngày sinh</Label>
+              <Input
+                id="dob"
+                type="date"
+                value={dob}
+                onChange={e => setDob(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <Button
+            onClick={handleSearch}
+            className="self-center flex items-center gap-2 px-8 py-3 text-base rounded-md"
+          >
+            <Search size={18} />
+            Tra cứu
+          </Button>
+
+          {error && <p className="text-red-500 text-center text-sm mt-2">{error}</p>}
+        </CardContent>
+      </Card>
+
+      {/* Kết quả */}
+      {result && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mt-8 w-full max-w-xl"
+        >
+          <Card className="bg-white rounded-lg shadow-md">
+            <CardHeader>
+              <h2 className="text-xl font-semibold text-gray-800 text-center">
+                Kết quả của {result.name}
+              </h2>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm text-gray-700">
+                {renderScoreRow("Toán", result.math)}
+                {renderScoreRow("Ngữ văn", result.literature)}
+                {renderScoreRow("Tiếng Anh", result.english)}
+                {renderScoreRow("Vật lý", result.physics)}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* FAQ reverted */}
+      <Card className="w-full max-w-xl mt-12 shadow-sm">
+        <CardHeader>
+          <h2 className="text-lg font-semibold text-gray-700">Câu hỏi thường gặp</h2>
+        </CardHeader>
+        <CardContent>
+          <Accordion type="single" collapsible className="space-y-4">
+            <AccordionItem value="q1">
+              <AccordionTrigger>Không tra cứu được điểm?</AccordionTrigger>
+              <AccordionContent>
+                Kiểm tra lại số báo danh và ngày sinh. Nếu vẫn không được, có thể dữ liệu
+                chưa được cập nhật hoặc hệ thống đang bận. Vui lòng thử lại sau.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="q2">
+              <AccordionTrigger>Tra cứu nhiều lần có bị giới hạn không?</AccordionTrigger>
+              <AccordionContent>
+                Hệ thống không giới hạn số lần tra cứu, nhưng vui lòng không làm mới liên tục
+                để đảm bảo ổn định.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="q3">
+              <AccordionTrigger>Điểm hiển thị có chính xác tuyệt đối?</AccordionTrigger>
+              <AccordionContent>
+                Dữ liệu lấy trực tiếp từ Bộ GD&ĐT. Mọi sai lệch (nếu có) vui lòng liên hệ hội đồng thi.
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </CardContent>
+      </Card>
+
+      <footer className="text-gray-500 mt-16 text-xs text-center">
+        © {new Date().getFullYear()} • Thiết kế bởi bạn
+      </footer>
+    </div>
+  );
+}
