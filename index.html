@@ -1,157 +1,43 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tra cứu điểm thi THPT</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body class="min-h-screen flex flex-col items-center bg-gray-50 py-10 px-4">
-    <!-- Title -->
-    <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-8 text-center">
-      Tra cứu điểm thi THPT
-    </h1>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tra cứu điểm</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- PapaParse để đọc CSV nhanh trên client -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Tra cứu điểm</h1>
 
-    <!-- Guide -->
-    <section
-      class="w-full max-w-xl mb-8 bg-white shadow-sm rounded-lg p-6 border border-gray-200"
-    >
-      <h2 class="text-lg font-semibold text-gray-700 mb-3">Hướng dẫn tra cứu</h2>
-      <ul class="list-disc list-inside space-y-1 text-sm text-gray-600">
-        <li>Nhập <strong>Số báo danh</strong> và <strong>Ngày sinh</strong> chính xác.</li>
-        <li>Bấm nút <em>Tra cứu</em> để xem kết quả.</li>
-        <li>Đây chỉ là bản demo, dữ liệu điểm thực có thể khác.</li>
-      </ul>
-    </section>
+    <div class="card">
+      <label for="csvFile">Chọn file CSV (tùy chọn nếu chạy cục bộ):</label>
+      <input type="file" id="csvFile" accept=".csv" />
+      <p class="hint">Hoặc hệ thống sẽ tự tải data.csv nếu có trên máy chủ.</p>
+    </div>
 
-    <!-- Form -->
-    <section class="w-full max-w-xl bg-white shadow-md rounded-lg p-8">
-      <form id="lookupForm" class="flex flex-col gap-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label for="cid" class="text-gray-700 block mb-1">Số báo danh</label>
-            <input
-              id="cid"
-              type="text"
-              placeholder="VD: 1234567"
-              class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-              required
-            />
-          </div>
-          <div>
-            <label for="dob" class="text-gray-700 block mb-1">Ngày sinh</label>
-            <input
-              id="dob"
-              type="date"
-              class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-              required
-            />
-          </div>
-        </div>
+    <div class="card">
+      <label for="sbdInput">Nhập Số báo danh:</label>
+      <input type="text" id="sbdInput" placeholder="VD: 01000001" />
+      <button id="searchBtn">Tra cứu</button>
+    </div>
 
-        <button
-          type="submit"
-          class="self-center flex items-center gap-2 px-8 py-3 text-base rounded-md bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          Tra cứu
-        </button>
-      </form>
-      <p id="errorMsg" class="text-red-500 text-center text-sm mt-4 hidden"></p>
-    </section>
-
-    <!-- Result (hidden by default) -->
-    <section
-      id="resultCard"
-      class="hidden mt-8 w-full max-w-xl bg-white rounded-lg shadow-md p-8"
-    >
-      <h2 id="resultTitle" class="text-xl font-semibold text-gray-800 text-center mb-6"></h2>
-      <div class="grid grid-cols-2 gap-y-3 gap-x-4 text-sm text-gray-700" id="resultGrid">
-        <!-- Filled by JS -->
+    <div id="result" class="card hidden">
+      <h2>Kết quả</h2>
+      <div id="meta"></div>
+      <div class="table-wrapper">
+        <table id="scoreTable">
+          <thead id="thead"></thead>
+          <tbody id="tbody"></tbody>
+        </table>
       </div>
-    </section>
+    </div>
 
-    <!-- FAQ -->
-    <section
-      class="w-full max-w-xl mt-12 bg-white shadow-sm rounded-lg p-6 border border-gray-200"
-    >
-      <h2 class="text-lg font-semibold text-gray-700 mb-4">Câu hỏi thường gặp</h2>
-      <details class="mb-3">
-        <summary class="cursor-pointer font-medium text-gray-700">Không tra cứu được điểm?</summary>
-        <p class="mt-2 text-sm text-gray-600">
-          Kiểm tra lại số báo danh và ngày sinh. Nếu vẫn không được, có thể dữ liệu chưa
-          được cập nhật hoặc hệ thống đang bận. Vui lòng thử lại sau.
-        </p>
-      </details>
-      <details class="mb-3">
-        <summary class="cursor-pointer font-medium text-gray-700">Tra cứu nhiều lần có bị giới hạn không?</summary>
-        <p class="mt-2 text-sm text-gray-600">
-          Hệ thống không giới hạn số lần tra cứu, nhưng vui lòng không làm mới liên tục để đảm bảo ổn định.
-        </p>
-      </details>
-      <details>
-        <summary class="cursor-pointer font-medium text-gray-700">Điểm hiển thị có chính xác tuyệt đối?</summary>
-        <p class="mt-2 text-sm text-gray-600">
-          Dữ liệu lấy trực tiếp từ Bộ GD&ĐT. Mọi sai lệch (nếu có) vui lòng liên hệ hội đồng thi.
-        </p>
-      </details>
-    </section>
+    <div id="status" class="status"></div>
+  </div>
 
-    <footer class="text-gray-500 mt-16 text-xs text-center">
-      © <span id="year"></span> • Thiết kế bởi Nguyễn Huy Dũng
-    </footer>
-
-    <script>
-      // Hiển thị năm hiện tại
-      document.getElementById("year").textContent = new Date().getFullYear();
-
-      const form = document.getElementById("lookupForm");
-      const resultCard = document.getElementById("resultCard");
-      const resultTitle = document.getElementById("resultTitle");
-      const resultGrid = document.getElementById("resultGrid");
-      const errorMsg = document.getElementById("errorMsg");
-
-      form.addEventListener("submit", function (e) {
-        e.preventDefault();
-
-        const cid = document.getElementById("cid").value.trim();
-        const dob = document.getElementById("dob").value;
-
-        if (!cid || !dob) {
-          errorMsg.textContent = "Vui lòng nhập đầy đủ thông tin.";
-          errorMsg.classList.remove("hidden");
-          resultCard.classList.add("hidden");
-          return;
-        }
-
-        errorMsg.classList.add("hidden");
-
-        // Điểm cố định demo
-        const fixedScores = {
-          "Toán": 9.5,
-          "Ngữ văn": 8,
-          "Tiếng Anh": 9,
-          "Vật lý": 10,
-        };
-
-        // Render kết quả
-        resultTitle.textContent = `Kết quả của Thí sinh ${cid}`;
-        resultGrid.innerHTML = "";
-
-        for (const [subject, score] of Object.entries(fixedScores)) {
-          const label = document.createElement("span");
-          label.textContent = subject;
-          label.className = "font-medium text-gray-600";
-
-          const value = document.createElement("span");
-          value.textContent = score;
-
-          resultGrid.appendChild(label);
-          resultGrid.appendChild(value);
-        }
-
-        resultCard.classList.remove("hidden");
-      });
-    </script>
-  </body>
+  <script src="script.js"></script>
+</body>
 </html>
