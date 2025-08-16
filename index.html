@@ -1,43 +1,326 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tra cứu điểm</title>
-  <link rel="stylesheet" href="styles.css" />
-  <!-- PapaParse để đọc CSV nhanh trên client -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <title>Tra cứu điểm theo Số Báo Danh</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.10/dist/tailwind.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js" crossorigin="anonymous"></script>
+  <!-- DỮ LIỆU NHÚNG CỐ ĐỊNH (sẽ được cập nhật khi bạn bấm Nhúng dữ liệu) -->
+  <script id="embeddedData" type="application/json">{"headers":[],"sbdColumn":null,"records":[]}</script>
+  <style>
+    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+  </style>
 </head>
-<body>
-  <div class="container">
-    <h1>Tra cứu điểm</h1>
+<body class="min-h-screen bg-slate-50 text-slate-800">
+  <div class="max-w-4xl mx-auto p-6">
+    <header class="mb-6">
+      <h1 class="text-3xl font-bold">Tra cứu điểm theo <span class="text-indigo-600">Số Báo Danh</span></h1>
+      <p class="text-slate-600 mt-2">Bạn có thể <strong>gắn cố định dữ liệu</strong> vào trang để dùng offline mà không cần upload mỗi lần.</p>
+    </header>
 
-    <div class="card">
-      <label for="csvFile">Chọn file CSV (tùy chọn nếu chạy cục bộ):</label>
-      <input type="file" id="csvFile" accept=".csv" />
-      <p class="hint">Hoặc hệ thống sẽ tự tải data.csv nếu có trên máy chủ.</p>
-    </div>
-
-    <div class="card">
-      <label for="sbdInput">Nhập Số báo danh:</label>
-      <input type="text" id="sbdInput" placeholder="VD: 01000001" />
-      <button id="searchBtn">Tra cứu</button>
-    </div>
-
-    <div id="result" class="card hidden">
-      <h2>Kết quả</h2>
-      <div id="meta"></div>
-      <div class="table-wrapper">
-        <table id="scoreTable">
-          <thead id="thead"></thead>
-          <tbody id="tbody"></tbody>
-        </table>
+    <section class="bg-white shadow-sm rounded-2xl p-5 border border-slate-200">
+      <div class="grid gap-4 md:grid-cols-2 items-end">
+        <div>
+          <label class="block text-sm font-medium mb-2" for="csvFile">Tệp CSV kết quả</label>
+          <input id="csvFile" type="file" accept=".csv,text/csv" class="block w-full file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer" />
+          <p id="fileInfo" class="text-xs text-slate-500 mt-2">Chưa tải tệp.</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button id="embedBtn" class="px-3 py-1.5 rounded-lg bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-60" disabled>Nhúng dữ liệu</button>
+            <button id="clearEmbeddedBtn" class="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300" title="Xóa dữ liệu nhúng đang lưu">Xóa dữ liệu nhúng</button>
+            <button id="exportHtmlBtn" class="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100" title="Tạo file HTML có dữ liệu đã nhúng">Xuất HTML đã nhúng</button>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-1">Chọn CSV → bấm <em>Nhúng dữ liệu</em> để gắn cố định vào trang (hoặc xuất file HTML tự chạy).</p>
+        </div>
+        <form id="lookupForm" class="grid grid-cols-[1fr_auto] gap-3">
+          <div>
+            <label class="block text-sm font-medium mb-2" for="sbdInput">Nhập SBD</label>
+            <input id="sbdInput" type="text" inputmode="numeric" placeholder="VD: 201812345" class="w-full rounded-xl border-slate-300 focus:border-indigo-500 focus:ring-indigo-500" />
+          </div>
+          <button id="submitBtn" type="submit" class="self-end h-10 px-5 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-60" disabled>Tra cứu</button>
+        </form>
       </div>
-    </div>
 
-    <div id="status" class="status"></div>
+      <div id="status" class="mt-4 text-sm text-slate-600"></div>
+    </section>
+
+    <section id="resultSection" class="mt-6 hidden">
+      <div class="bg-white shadow-sm rounded-2xl border border-slate-200 overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+          <h2 class="font-semibold">Kết quả tra cứu</h2>
+          <div class="space-x-2">
+            <button id="copyBtn" class="text-sm px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200">Sao chép</button>
+            <button id="resetBtn" class="text-sm px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200">Xóa kết quả</button>
+          </div>
+        </div>
+        <div id="resultContainer" class="p-5"></div>
+      </div>
+    </section>
+
+    <section class="mt-8">
+      <details class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+        <summary class="cursor-pointer font-medium">Bộ kiểm thử tích hợp (giúp phát hiện lỗi nhanh)</summary>
+        <div class="mt-4 space-y-3 text-sm">
+          <p>Kiểm thử chạy trên dữ liệu CSV mẫu để đảm bảo: (1) Nhận diện cột SBD, (2) Tra cứu được SBD, (3) Xử lý trường hợp không có SBD/không tìm thấy.</p>
+          <button id="runTestsBtn" class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Chạy kiểm thử</button>
+          <div id="testResults" class="mt-3 whitespace-pre-wrap font-mono text-xs bg-slate-50 p-3 rounded-lg border border-slate-200"></div>
+        </div>
+      </details>
+    </section>
+
+    <footer class="mt-10 text-xs text-slate-500">
+      <p>Gợi ý: Tệp CSV nên có cột <strong>Số Báo Danh</strong>/<strong>SBD</strong>. Trang tự nhận dạng nhiều biến thể tên cột (VD: <em>Số Báo Danh</em>, <em>SBD</em>, <em>MaThiSinh</em>...).</p>
+    </footer>
   </div>
 
-  <script src="script.js"></script>
+  <script>
+  (function(){
+    'use strict';
+
+    // ====== Tiện ích ======
+    function removeDiacritics(str){
+      var s = String(str == null ? '' : str);
+      try { if (s.normalize) s = s.normalize('NFD'); } catch(_) {}
+      s = s.replace(/[\u0300-\u036f]/g, '');
+      s = s.replace(/đ/g, 'd').replace(/Đ/g, 'D');
+      return s;
+    }
+    function normalizeHeader(h){
+      var s = removeDiacritics(String(h == null ? '' : h));
+      return s.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
+    }
+    function isSbdHeader(h){
+      var n = normalizeHeader(h);
+      if (n === 'sbd' || n.indexOf('sobaodanh') !== -1) return true;
+      if (n === 'sobd' || n === 'sobdn' || n === 'sobao') return true;
+      if (n === 'mathisinh' || n === 'mathis' || n === 'mahs') return true;
+      return false;
+    }
+
+    // ====== Trạng thái ======
+    var records = [];
+    var headers = [];
+    var sbdColumn = null;
+    var indexBySbd = new Map();
+
+    // ====== DOM ======
+    function $(id){ return document.getElementById(id); }
+    var csvInput = $('csvFile');
+    var fileInfo = $('fileInfo');
+    var lookupForm = $('lookupForm');
+    var sbdInput = $('sbdInput');
+    var submitBtn = $('submitBtn');
+    var statusEl = $('status');
+    var resultSection = $('resultSection');
+    var resultContainer = $('resultContainer');
+    var resetBtn = $('resetBtn');
+    var copyBtn = $('copyBtn');
+    var embedBtn = $('embedBtn');
+    var clearEmbeddedBtn = $('clearEmbeddedBtn');
+    var exportHtmlBtn = $('exportHtmlBtn');
+
+    function showError(msg){ statusEl.innerHTML = '<span class="text-red-700">'+msg+'</span>'; }
+
+    // ====== CSV parsers ======
+    function parseCsvSimple(text){
+      var rows = [], cur = '', inQuotes = false, row = [];
+      for (var i=0;i<text.length;i++){
+        var ch = text[i];
+        if (inQuotes){
+          if (ch === '"'){
+            if (text[i+1] === '"'){ cur += '"'; i++; } else { inQuotes = false; }
+          } else { cur += ch; }
+        } else {
+          if (ch === '"') inQuotes = true;
+          else if (ch === ','){ row.push(cur); cur=''; }
+          else if (ch === '\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
+          else if (ch === '\r'){ /* skip */ }
+          else { cur += ch; }
+        }
+      }
+      if (cur.length || row.length) { row.push(cur); rows.push(row); }
+      if (!rows.length) return { data: [], fields: [] };
+      var fields = rows[0];
+      var data = [];
+      for (var r=1; r<rows.length; r++){
+        var obj = {};
+        for (var c=0; c<fields.length; c++){ obj[fields[c]] = rows[r][c] != null ? rows[r][c] : ''; }
+        var allEmpty = true; for (var k in obj){ if (String(obj[k]).trim() !== '') { allEmpty = false; break; } }
+        if (!allEmpty) data.push(obj);
+      }
+      return { data: data, fields: fields };
+    }
+    function detectSbdColumn(hs){
+      for (var i=0;i<hs.length;i++){ if (isSbdHeader(hs[i])) return hs[i]; }
+      var candidates = ['SBD','Số Báo Danh','So Bao Danh','so_bao_danh','SoBaoDanh','soBaoDanh','MaThiSinh','Mã thí sinh'];
+      for (var j=0;j<candidates.length;j++){ if (hs.indexOf(candidates[j]) !== -1) return candidates[j]; }
+      return null;
+    }
+    function buildIndex(){
+      indexBySbd.clear(); if (!sbdColumn) return;
+      for (var i=0;i<records.length;i++){
+        var raw = records[i][sbdColumn]; var key = String(raw == null ? '' : raw).trim();
+        if (key) indexBySbd.set(key, i);
+      }
+    }
+    function setReadyState(){
+      statusEl.innerHTML = 'Đã sẵn sàng tra cứu. Đã nhận dạng cột SBD: <strong>'+sbdColumn+'</strong>.';
+      submitBtn.disabled = false; if (embedBtn) embedBtn.disabled = !records.length;
+      sbdInput.focus();
+    }
+
+    // ====== Nạp & phân tích CSV ======
+    function parseFileWithPapa(file){
+      return new Promise(function(resolve){
+        window.Papa.parse(file, { header: true, skipEmptyLines: true, dynamicTyping: false, worker: false,
+          transformHeader: function(h){ return (h==null ? '' : String(h)).trim(); },
+          complete: function(res){ resolve({ data: res.data || [], fields: (res.meta && res.meta.fields) ? res.meta.fields : [] }); },
+          error: function(){ resolve({ data: [], fields: [] }); }
+        });
+      });
+    }
+    function parseFileWithFallback(file){ return file.text().then(function(text){ return parseCsvSimple(text); }); }
+    function safeParseCsv(file){
+      if (window.Papa && typeof window.Papa.parse === 'function') return parseFileWithPapa(file);
+      return parseFileWithFallback(file);
+    }
+
+    csvInput.addEventListener('change', function(){
+      try{
+        var file = (csvInput.files && csvInput.files[0]) ? csvInput.files[0] : null; if (!file) return;
+        fileInfo.textContent = 'Đang tải: ' + file.name + ' (' + (file.size/1024).toFixed(1) + ' KB)';
+        statusEl.textContent = 'Đang phân tích tệp...'; submitBtn.disabled = true;
+        resultSection.classList.add('hidden'); resultContainer.innerHTML = '';
+
+        safeParseCsv(file).then(function(res){
+          records = res.data || []; headers = res.fields && res.fields.length ? res.fields : (records[0] ? Object.keys(records[0]) : []);
+          sbdColumn = detectSbdColumn(headers); buildIndex();
+          var total = records.length; var hCount = headers.length;
+          fileInfo.textContent = file.name + ' • ' + total.toLocaleString('vi-VN') + ' dòng • ' + hCount + ' cột';
+          if (!total){ showError('Tệp CSV không có dữ liệu.'); if (embedBtn) embedBtn.disabled = true; return; }
+          if (!sbdColumn){ showError('Không tìm thấy cột Số Báo Danh. Hãy đảm bảo tệp có cột <strong>SBD</strong> hoặc <strong>Số Báo Danh</strong>.'); if (embedBtn) embedBtn.disabled = true; return; }
+          setReadyState();
+        }).catch(function(err){ console.error(err); showError('Không đọc được tệp CSV. Vui lòng thử lại hoặc kiểm tra định dạng.'); if (embedBtn) embedBtn.disabled = true; });
+      }catch(e){ console.error(e); showError('Đã xảy ra lỗi khi xử lý tệp.'); if (embedBtn) embedBtn.disabled = true; }
+    });
+
+    // ====== Tra cứu ======
+    lookupForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      try{
+        var sbd = String(sbdInput.value || '').trim(); if (!sbd || !records.length || !sbdColumn) return;
+        var idx = indexBySbd.get(sbd); resultContainer.innerHTML = '';
+        if (typeof idx === 'undefined'){
+          resultSection.classList.remove('hidden');
+          resultContainer.innerHTML = '<div class="text-slate-700">Không tìm thấy SBD <strong>'+sbd+'</strong>. Hãy kiểm tra lại hoặc đảm bảo đúng tệp CSV.</div>';
+          return;
+        }
+        var row = records[idx]; var table = document.createElement('table'); table.className = 'w-full text-sm'; var tbody = document.createElement('tbody');
+        for (var i=0;i<headers.length;i++){
+          var h = headers[i]; var tr = document.createElement('tr'); tr.className = 'border-b last:border-0 border-slate-200';
+          var th = document.createElement('th'); th.className = 'text-left font-medium px-3 py-2 bg-slate-50 w-48 align-top'; th.textContent = h;
+          var td = document.createElement('td'); td.className = 'px-3 py-2'; var val = row[h]; td.textContent = (val == null || val === '') ? '—' : String(val);
+          tr.appendChild(th); tr.appendChild(td); tbody.appendChild(tr);
+        }
+        table.appendChild(tbody); resultContainer.appendChild(table); resultSection.classList.remove('hidden');
+      }catch(e){ console.error(e); showError('Có lỗi khi hiển thị kết quả.'); }
+    });
+
+    // ====== Hành động phụ ======
+    resetBtn.addEventListener('click', function(){ resultContainer.innerHTML = ''; resultSection.classList.add('hidden'); sbdInput.value = ''; sbdInput.focus(); });
+    copyBtn.addEventListener('click', function(){ try{ var text = resultContainer.innerText || ''; if (!text.trim()) return; navigator.clipboard.writeText(text).then(function(){ statusEl.textContent = 'Đã sao chép kết quả vào clipboard.'; setTimeout(function(){ statusEl.textContent = ''; }, 1500); }); }catch(_){} });
+
+    // ====== Nhúng dữ liệu & xuất HTML ======
+    function applyEmbeddedPayload(payload){
+      try{
+        headers = Array.isArray(payload.headers) ? payload.headers : [];
+        sbdColumn = payload.sbdColumn || null;
+        records = Array.isArray(payload.records) ? payload.records : [];
+        buildIndex();
+        if (records.length && sbdColumn){
+          submitBtn.disabled = false; if (embedBtn) embedBtn.disabled = false;
+          statusEl.innerHTML = 'Đang dùng <strong>dữ liệu nhúng</strong> ('+records.length.toLocaleString('vi-VN')+' dòng).';
+          fileInfo.textContent = 'Dữ liệu nhúng • '+records.length.toLocaleString('vi-VN')+' dòng • '+headers.length+' cột';
+        }
+      }catch(e){ console.error(e); }
+    }
+    function currentPayload(){ return { headers: headers, sbdColumn: sbdColumn, records: records }; }
+
+    if (embedBtn) embedBtn.addEventListener('click', function(){
+      if (!records.length || !sbdColumn){ statusEl.textContent = 'Chưa có dữ liệu để nhúng.'; return; }
+      var payload = currentPayload();
+      try {
+        localStorage.setItem('sbd_embedded_payload', JSON.stringify(payload));
+        var el = document.getElementById('embeddedData'); if (el) el.textContent = JSON.stringify(payload);
+        statusEl.innerHTML = 'Đã <strong>nhúng dữ liệu</strong> vào trang này (và lưu localStorage). Bạn có thể bấm "Xuất HTML đã nhúng" để tải file tự chạy.';
+      } catch(e){ console.error(e); }
+    });
+    if (clearEmbeddedBtn) clearEmbeddedBtn.addEventListener('click', function(){
+      try{
+        localStorage.removeItem('sbd_embedded_payload');
+        var el = document.getElementById('embeddedData'); if (el) el.textContent = JSON.stringify({ headers: [], sbdColumn: null, records: [] });
+        statusEl.textContent = 'Đã xóa dữ liệu nhúng.'; submitBtn.disabled = true; if (embedBtn) embedBtn.disabled = true;
+        records = []; headers = []; sbdColumn = null; indexBySbd.clear();
+      }catch(e){ console.error(e); }
+    });
+    if (exportHtmlBtn) exportHtmlBtn.addEventListener('click', function(){
+      try{
+        var payload = currentPayload();
+        var el = document.getElementById('embeddedData'); if (el) el.textContent = JSON.stringify(payload);
+        var html = '<!DOCTYPE html>'+document.documentElement.outerHTML;
+        var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a'); a.href = url; a.download = 'tra-cuu-sbd-embedded.html';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+      }catch(e){ console.error(e); }
+    });
+
+    // ====== Kiểm thử tích hợp ======
+    function assert(name, cond){ return (cond ? '✅ ' : '❌ ') + name + (cond ? '' : ' (FAILED)'); }
+    function runTests(){
+      var out = [];
+      var csv1 = 'Số Báo Danh,Họ tên,Điểm Toán,Điểm Văn\n201812345,Nguyen Van A,8.2,7.5\n201812346,Tran Thi B,9.0,8.0\n';
+      var p1 = (window.Papa && window.Papa.parse) ? new Promise(function(r){ window.Papa.parse(csv1,{header:true,dynamicTyping:false,complete:function(res){ r(res); }}); }) : Promise.resolve({ data: parseCsvSimple(csv1).data, meta: { fields: parseCsvSimple(csv1).fields } });
+      var csv2 = 'SBD,HoTen,Diem1\n00123,A,10\n00124,B,9\n';
+      var p2 = (window.Papa && window.Papa.parse) ? new Promise(function(r){ window.Papa.parse(csv2,{header:true,dynamicTyping:false,complete:function(res){ r(res); }}); }) : Promise.resolve({ data: parseCsvSimple(csv2).data, meta: { fields: parseCsvSimple(csv2).fields } });
+      var csv3 = 'MaHS,HoTen,Diem\n1,A,9\n';
+      var p3 = (window.Papa && window.Papa.parse) ? new Promise(function(r){ window.Papa.parse(csv3,{header:true,dynamicTyping:false,complete:function(res){ r(res); }}); }) : Promise.resolve({ data: parseCsvSimple(csv3).data, meta: { fields: parseCsvSimple(csv3).fields } });
+      Promise.all([p1,p2,p3]).then(function(arr){
+        var h1 = (arr[0].meta && arr[0].meta.fields) ? arr[0].meta.fields : parseCsvSimple(csv1).fields;
+        out.push(assert('Phát hiện cột SBD từ "Số Báo Danh"', detectSbdColumn(h1) === 'Số Báo Danh'));
+        var h2 = (arr[1].meta && arr[1].meta.fields) ? arr[1].meta.fields : parseCsvSimple(csv2).fields;
+        out.push(assert('Phát hiện cột SBD từ "SBD"', detectSbdColumn(h2) === 'SBD'));
+        var data2 = arr[1].data || parseCsvSimple(csv2).data; var col2 = detectSbdColumn(h2); var idx2 = new Map();
+        for (var i=0;i<data2.length;i++){ idx2.set(String(data2[i][col2]), i); }
+        out.push(assert('Tra cứu SBD với số 0 ở đầu ("00123")', typeof idx2.get('00123') !== 'undefined'));
+        var h3 = (arr[2].meta && arr[2].meta.fields) ? arr[2].meta.fields : parseCsvSimple(csv3).fields;
+        out.push(assert('Không nhận diện SBD khi không có cột phù hợp', detectSbdColumn(h3) === null));
+        $('testResults').textContent = out.join('\n');
+      }).catch(function(err){ $('testResults').textContent = 'Lỗi khi chạy kiểm thử: ' + (err && err.message ? err.message : String(err)); });
+    }
+    $('runTestsBtn').addEventListener('click', runTests);
+
+    // ====== Khởi tạo ======
+    window.addEventListener('DOMContentLoaded', function(){
+      if (!(window.Papa && typeof window.Papa.parse === 'function')){
+        statusEl.innerHTML = 'Không tải được thư viện <strong>PapaParse</strong>. Sẽ dùng bộ phân tích CSV dự phòng (đơn giản).';
+      }
+      try {
+        var el = document.getElementById('embeddedData');
+        if (el && el.textContent){
+          var payload = JSON.parse(el.textContent || '{}');
+          if (payload && Array.isArray(payload.records) && payload.records.length){ applyEmbeddedPayload(payload); }
+        }
+      } catch(e){ console.warn('Embedded JSON parse failed', e); }
+      try {
+        var cached = localStorage.getItem('sbd_embedded_payload');
+        if (cached){ var p = JSON.parse(cached); if (p && Array.isArray(p.records) && p.records.length){ applyEmbeddedPayload(p); } }
+      } catch(e){ console.warn('No cached payload', e); }
+    });
+
+  })();
+  </script>
 </body>
 </html>
